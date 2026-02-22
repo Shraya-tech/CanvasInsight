@@ -76,7 +76,6 @@ Notes
 
 Teams
 
-Shraya Rajkarnikar and
-Jebish Bhattarai Khatri 
+Shraya Rajkarnikar and Jebish Bhattarai Khatri 
 
 Built at **HackUNCP 2026** for the AI in Education track.
