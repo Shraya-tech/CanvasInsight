@@ -9,7 +9,7 @@
     const m = url.match(/^(https:\/\/[^/]+)\/courses\/(\d+)/);
     return m ? { baseUrl: m[1], courseId: m[2] } : null;
   }
-
+iykyk
   // ── Canvas API helpers ────────────────────────────────────────────────────
   async function cFetch(url) {
     const r = await fetch(url, { credentials: 'include', headers: { Accept: 'application/json' } });
