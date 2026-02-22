@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "CanvasInsight – Discussion Analyzer",
+  "version": "2.0.0",
+  "description": "AI-powered Canvas discussion analyzer for professors.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://*.instructure.com/*",
+    "https://*.canvas.net/*",
+    "https://*.uncp.edu/*",
+    "https://canvas.uncp.edu/*",
+    "https://api.anthropic.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.instructure.com/courses/*/discussion_topics/*",
+        "https://*.canvas.net/courses/*/discussion_topics/*",
+        "https://*.uncp.edu/courses/*/discussion_topics/*",
+        "https://canvas.uncp.edu/courses/*/discussion_topics/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["dashboard.html", "dashboard.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

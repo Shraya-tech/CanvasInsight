@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CanvasInsight — Professor Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#000000;--s1:#0e0e0e;--s2:#141414;--s3:#1c1c1c;
+  --border:#2a2a2a;--b2:#333333;
+  --text:#e2e8f0;--muted:#64748b;--dim:#94a3b8;
+  --blue:#e53e3e;--cyan:#fc4444;--green:#22c55e;
+  --amber:#f59e0b;--red:#ef4444;--purple:#a78bfa;
+  --accent:#e53e3e;--accent2:#fc8080;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+
+/* HEADER */
+.header{background:#0a0a0a;border-bottom:1px solid #2a2a2a;padding:0 32px;position:sticky;top:0;z-index:50}
+.hinner{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-box{width:38px;height:38px;background:linear-gradient(135deg,#c53030,#e53e3e);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:19px}
+.logo-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;background:linear-gradient(90deg,#fc8080,#e53e3e);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:10px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.hmeta{display:flex;align-items:center;gap:10px}
+.chip{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.04em}
+.chip-blue{background:#2a0a0a;color:#fc8080;border:1px solid #7f1d1d}
+.chip-green{background:#0a2010;color:#4ade80;border:1px solid #14532d}
+.chip-amber{background:#1c1000;color:#fbbf24;border:1px solid #78350f}
+.chip-red{background:#2a0a0a;color:#fca5a5;border:1px solid #7f1d1d}
+.print-btn{background:var(--s3);border:1px solid var(--b2);color:var(--dim);border-radius:6px;padding:6px 14px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:500}
+.print-btn:hover{border-color:#e53e3e;color:#fc8080}
+.nav-btn{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:6px 14px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px}
+.nav-btn:hover{border-color:#e53e3e;color:#fc8080}
+/* Outcomes banner */
+.outcomes-banner{background:#150505;border:1px solid #7f1d1d;border-radius:8px;padding:10px 14px;margin-bottom:20px;display:flex;align-items:flex-start;gap:10px;font-size:12px}
+.ob-icon{font-size:15px;margin-top:1px;flex-shrink:0}
+.ob-label{font-size:10px;font-weight:600;color:#ffffff;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.ob-text{color:#94a3b8;line-height:1.5}
+
+/* LAYOUT */
+.main{max-width:1280px;margin:0 auto;padding:28px 32px}
+
+/* PAGE TITLE */
+.ptitle{margin-bottom:20px}
+.ptitle h1{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px}
+.ptitle p{color:var(--muted);font-size:13px}
+.divider{height:1px;background:var(--border);margin:0 0 24px}
+
+/* STAT CARDS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden}
+.stat::after{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat.blue::after{background:linear-gradient(90deg,#c53030,#e53e3e)}
+.stat.green::after{background:var(--green)}
+.stat.amber::after{background:var(--amber)}
+.stat.red::after{background:var(--red)}
+.stat-lbl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.stat-val{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;line-height:1;margin-bottom:4px}
+.stat.blue .stat-val{color:#fc8080}
+.stat.green .stat-val{color:#4ade80}
+.stat.amber .stat-val{color:#fbbf24}
+.stat.red .stat-val{color:#fca5a5}
+.stat-sub{font-size:11px;color:var(--muted)}
+
+/* GRID */
+.grid-2{display:grid;grid-template-columns:1fr 380px;gap:18px;margin-bottom:18px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:18px}
+
+/* PANEL */
+.panel{background:var(--s1);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.ph{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.ph-title{font-weight:700;font-size:13px;display:flex;align-items:center;gap:7px;color:var(--text)}
+.pb{padding:18px}
+.pb-tight{padding:14px 18px}
+
+/* SUMMARY */
+.summary-box{background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:14px;font-size:13px;line-height:1.8;color:var(--dim);font-style:italic}
+
+/* STUDENT TABLE */
+.stable{width:100%;border-collapse:collapse}
+.stable thead tr{border-bottom:2px solid var(--border)}
+.stable th{padding:10px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.stable tbody tr{border-bottom:1px solid var(--border);transition:background .15s;cursor:pointer}
+.stable tbody tr:last-child{border-bottom:none}
+.stable tbody tr:hover{background:var(--s2)}
+.stable td{padding:12px 12px;vertical-align:top}
+.sname{font-weight:600;font-size:13px;margin-bottom:2px}
+.ssummary{font-size:11px;color:var(--muted);line-height:1.5;max-width:300px}
+.level-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600}
+.lv-excellent{background:#0a2010;color:#4ade80;border:1px solid #14532d}
+.lv-good{background:#1a0505;color:#fc8080;border:1px solid #7f1d1d}
+.lv-fair{background:#1c1000;color:#fbbf24;border:1px solid #78350f}
+.lv-poor{background:#2a0a0a;color:#fca5a5;border:1px solid #991b1b}
+.score-pill{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;padding:2px 8px;border-radius:6px;min-width:46px;text-align:center;display:inline-block}
+.action-dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.ad-none{background:#333}
+.ad-monitor{background:#e53e3e}
+.ad-followup{background:var(--amber);box-shadow:0 0 5px var(--amber)}
+.ad-intervention{background:var(--red);box-shadow:0 0 6px var(--red)}
+.gaps-cell{font-size:11px;color:#f87171;line-height:1.5;max-width:200px}
+.strengths-cell{font-size:11px;color:#4ade80;line-height:1.5;max-width:200px}
+
+/* PROGRESS BAR */
+.mini-bar{height:4px;background:var(--s3);border-radius:2px;margin-top:5px;overflow:hidden}
+.mini-fill{height:100%;border-radius:2px}
+
+/* TOPICS */
+.topic-item{padding:12px 0;border-bottom:1px solid var(--border)}
+.topic-item:last-child{border-bottom:none}
+.topic-name{font-weight:600;font-size:13px;margin-bottom:4px}
+.topic-exp{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:6px}
+.topic-students{display:flex;flex-wrap:wrap;gap:4px}
+.tstudent{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:500}
+
+/* WELL UNDERSTOOD */
+.well-item{display:flex;align-items:flex-start;gap:8px;padding:9px 0;border-bottom:1px solid var(--border)}
+.well-item:last-child{border-bottom:none}
+.well-check{color:var(--green);font-size:15px;margin-top:1px}
+.well-txt{font-size:13px;color:var(--dim)}
+
+/* ACTION ITEMS */
+.action-item{background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:12px 14px;margin-bottom:9px;display:flex;gap:10px;align-items:flex-start}
+.action-item:last-child{margin-bottom:0}
+.apriority{width:6px;flex-shrink:0;border-radius:3px;align-self:stretch;min-height:40px}
+.ap-high{background:var(--red)}
+.ap-medium{background:var(--amber)}
+.ap-low{background:#e53e3e}
+.action-body{}
+.action-title{font-weight:600;font-size:13px;margin-bottom:3px}
+.action-reason{font-size:11px;color:var(--muted);line-height:1.5}
+
+/* FOLLOW-UPS */
+.fq-item{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border)}
+.fq-item:last-child{border-bottom:none}
+.fq-num{width:22px;height:22px;border-radius:50%;background:var(--s3);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fc8080;flex-shrink:0;margin-top:1px}
+.fq-q{font-size:12px;color:var(--dim);line-height:1.6}
+
+/* DETAIL MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--s1);border:1px solid #2a2a2a;border-radius:14px;width:560px;max-height:80vh;overflow-y:auto;padding:24px}
+.modal h2{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:4px}
+.modal-sub{color:var(--muted);font-size:12px;margin-bottom:18px}
+.modal-section{margin-bottom:14px}
+.modal-section h4{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.modal-section p{font-size:13px;line-height:1.7;color:var(--dim)}
+.modal-close{float:right;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;margin-top:-4px}
+
+/* EMPTY */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center;gap:14px}
+.empty-icon{font-size:52px}
+.empty h2{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--dim)}
+.empty p{font-size:13px;color:var(--muted);max-width:380px;line-height:1.7}
+
+/* LEGEND */
+.legend{display:flex;gap:16px;flex-wrap:wrap}
+.lg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.anim{animation:fadeUp .35s ease both}
+.d1{animation-delay:.05s}.d2{animation-delay:.1s}.d3{animation-delay:.15s}.d4{animation-delay:.2s}
+
+@media print{.header{position:static}.print-btn,.modal-overlay{display:none!important}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="hinner">
+    <div class="logo">
+      <div class="logo-box">📊</div>
+      <div><div class="logo-name">CanvasInsight</div><div class="logo-sub">Professor Report</div></div>
+    </div>
+    <div class="hmeta">
+      <span class="chip chip-blue" id="hCourse">—</span>
+      <span class="chip chip-green" id="hParticipants">—</span>
+      <span style="font-size:11px;color:var(--muted)" id="hTime">—</span>
+      <button class="nav-btn" id="backBtn">← All Discussions</button>
+      <button class="print-btn" id="printBtn">⬇ Print / Save PDF</button>
+    </div>
+  </div>
+</header>
+
+<main class="main" id="app">
+  <div class="empty">
+    <div class="empty-icon">📋</div>
+    <h2>No Report Loaded</h2>
+    <p>Open the CanvasInsight extension on a Canvas discussion page, analyze it, then click "View Full Report."</p>
+  </div>
+</main>
+
+<!-- Student Detail Modal -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal" id="modalBox">
+    <button class="modal-close" onclick="document.getElementById('modal').classList.remove('show')">×</button>
+    <h2 id="mName">—</h2>
+    <div class="modal-sub" id="mMeta">—</div>
+    <div class="modal-section">
+      <h4>Overall Assessment</h4>
+      <p id="mSummary">—</p>
+    </div>
+    <div class="modal-section">
+      <h4>✅ Strengths</h4>
+      <p id="mStrengths" style="color:#4ade80">—</p>
+    </div>
+    <div class="modal-section" id="mGapsSection">
+      <h4>⚠ Knowledge Gaps</h4>
+      <p id="mGaps" style="color:#f87171">—</p>
+    </div>
+    <div class="modal-section">
+      <h4>Recommended Action</h4>
+      <p id="mAction">—</p>
+    </div>
+  </div>
+</div>
+
+<script src="dashboard.js"></script>
+</body>
