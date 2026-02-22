@@ -8,10 +8,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       .catch(e => sendResponse({ success: false, error: e.message }));
     return true;
   }
-
+lkljhf
   if (msg.action === 'OPEN_DASHBOARD') {
     chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') }, (dashTab) => {
-      const listener = (tabId, info) => {
+     const listener = (tabId, info) => {
         if (tabId === dashTab.id && info.status === 'complete') {
           chrome.tabs.onUpdated.removeListener(listener);
           chrome.scripting.executeScript({
