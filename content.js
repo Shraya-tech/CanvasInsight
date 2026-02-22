@@ -73,54 +73,198 @@
 
   // ── Scrape posts ──────────────────────────────────────────────────────────
   function scrape() {
+    // ── Course title ──
     const courseTitle =
       document.querySelector('#breadcrumbs li:nth-child(2) a')?.innerText?.trim() ||
       document.querySelector('#breadcrumbs .ellipsible')?.innerText?.trim() ||
+      document.querySelector('[aria-label="breadcrumb"] a:nth-child(2)')?.innerText?.trim() ||
+      document.querySelector('nav[aria-label="breadcrumb"] li:nth-child(2)')?.innerText?.trim() ||
       'Unknown Course';
 
+    // ── Discussion title ──
     const discussionTitle =
       document.querySelector('[data-testid="discussion-topic-container"] h1')?.innerText?.trim() ||
       document.querySelector('h1.discussion-title')?.innerText?.trim() ||
+      document.querySelector('[class*="DiscussionTopicTitle"]')?.innerText?.trim() ||
       document.querySelector('h1')?.innerText?.trim() ||
       document.title?.replace(/\s*[-|].*$/i, '').trim() ||
       'Unknown Discussion';
 
+    // ── Discussion prompt ──
     const discussionPrompt =
       document.querySelector('[data-testid="discussion-topic-container"] [data-testid="message-body"]')?.innerText?.trim() ||
       document.querySelector('#discussion_topic .message')?.innerText?.trim() ||
+      document.querySelector('[class*="DiscussionTopicContainer"] [class*="message"]')?.innerText?.trim() ||
       '';
 
-    const selectors = ['[data-testid="discussion-entry"]','[data-testid="reply"]','.discussion_entry','.entry-content','[class*="DiscussionEntry"]'];
-    let entries = [];
-    for (const s of selectors) {
-      const found = document.querySelectorAll(s);
-      if (found.length > 0) { entries = Array.from(found); break; }
-    }
-    if (!entries.length) entries = Array.from(document.querySelectorAll('[data-testid="message-body"]'));
-
+    // ── Posts: try many Canvas DOM strategies ──
     const posts = [];
-    entries.forEach((e, i) => {
-      const author =
-        e.querySelector('[data-testid="author-name"]')?.innerText?.trim() ||
-        e.querySelector('.author')?.innerText?.trim() ||
-        e.querySelector('.user_name')?.innerText?.trim() ||
-        `Student ${i + 1}`;
-      const body =
-        e.querySelector('[data-testid="message-body"]')?.innerText?.trim() ||
-        e.querySelector('.message.user_content')?.innerText?.trim() ||
-        e.querySelector('p')?.innerText?.trim() ||
-        e.innerText?.trim() || '';
-      if (body.length > 15) posts.push({ author, body, timestamp: e.querySelector('time')?.getAttribute('datetime') || '' });
-    });
+    const seen = new Set(); // deduplicate by body content
 
-    // Last resort fallback
+    function addPost(author, body, timestamp) {
+      const clean = body.trim();
+      if (clean.length < 10) return;
+      const key = (author + '|' + clean.slice(0, 80)).toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      posts.push({ author: author || 'Unknown Student', body: clean, timestamp: timestamp || '' });
+    }
+
+    // Strategy 1: Canvas new React UI — data-testid="discussion-entry"
+    const entryEls = document.querySelectorAll('[data-testid="discussion-entry"]');
+    if (entryEls.length) {
+      entryEls.forEach((el, i) => {
+        const author =
+          el.querySelector('[data-testid="author-name"]')?.innerText?.trim() ||
+          el.querySelector('[class*="AuthorName"]')?.innerText?.trim() ||
+          el.querySelector('[class*="author"]')?.innerText?.trim() ||
+          `Student ${i + 1}`;
+        const body =
+          el.querySelector('[data-testid="message-body"]')?.innerText?.trim() ||
+          el.querySelector('[class*="MessageBody"]')?.innerText?.trim() ||
+          el.querySelector('[class*="message-body"]')?.innerText?.trim() ||
+          el.innerText?.trim() || '';
+        const ts = el.querySelector('time')?.getAttribute('datetime') || '';
+        addPost(author, body, ts);
+      });
+    }
+
+    // Strategy 2: data-testid="reply"
     if (!posts.length) {
-      const blob = document.querySelector('#discussion_entries')?.innerText?.trim() ||
-        document.querySelector('[data-component="DiscussionEntries"]')?.innerText?.trim() || '';
-      if (blob.length > 30) posts.push({ author: 'Full Discussion', body: blob.slice(0, 8000), timestamp: '' });
+      document.querySelectorAll('[data-testid="reply"]').forEach((el, i) => {
+        const author =
+          el.querySelector('[data-testid="author-name"]')?.innerText?.trim() ||
+          `Student ${i + 1}`;
+        const body = el.querySelector('[data-testid="message-body"]')?.innerText?.trim() || el.innerText?.trim() || '';
+        addPost(author, body, el.querySelector('time')?.getAttribute('datetime') || '');
+      });
+    }
+
+    // Strategy 3: old Canvas UI — .discussion_entry
+    if (!posts.length) {
+      document.querySelectorAll('.discussion_entry').forEach((el, i) => {
+        const author =
+          el.querySelector('.author')?.innerText?.trim() ||
+          el.querySelector('.user_name')?.innerText?.trim() ||
+          `Student ${i + 1}`;
+        const body =
+          el.querySelector('.message.user_content')?.innerText?.trim() ||
+          el.querySelector('.entry-content')?.innerText?.trim() ||
+          el.innerText?.trim() || '';
+        addPost(author, body, el.querySelector('time')?.getAttribute('datetime') || '');
+      });
+    }
+
+    // Strategy 4: any element with data-testid containing "entry" or "post"
+    if (!posts.length) {
+      const dynamicEntries = document.querySelectorAll('[data-testid*="entry"], [data-testid*="post"], [data-testid*="reply"]');
+      dynamicEntries.forEach((el, i) => {
+        // Skip the discussion prompt container
+        if (el.closest('[data-testid="discussion-topic-container"]')) return;
+        const authorEl = el.querySelector('[data-testid*="author"], [class*="author"], [class*="Author"]');
+        const author = authorEl?.innerText?.trim() || `Student ${i + 1}`;
+        const bodyEl = el.querySelector('[data-testid*="body"], [data-testid*="message"], [class*="body"], [class*="message"]');
+        const body = bodyEl?.innerText?.trim() || el.innerText?.trim() || '';
+        addPost(author, body, el.querySelector('time')?.getAttribute('datetime') || '');
+      });
+    }
+
+    // Strategy 5: Canvas React class-based selectors (class names often contain these patterns)
+    if (!posts.length) {
+      const classPatterns = [
+        '[class*="DiscussionEntry"]',
+        '[class*="discussion-entry"]',
+        '[class*="DiscussionPost"]',
+        '[class*="discussion-post"]',
+        '[class*="ThreadingToolbar"]',
+      ];
+      for (const pattern of classPatterns) {
+        const els = document.querySelectorAll(pattern);
+        if (els.length) {
+          els.forEach((el, i) => {
+            const author = el.querySelector('[class*="Author"], [class*="author"]')?.innerText?.trim() || `Student ${i + 1}`;
+            const body = el.querySelector('[class*="Body"], [class*="body"], [class*="Message"], [class*="message"]')?.innerText?.trim() || el.innerText?.trim() || '';
+            addPost(author, body, el.querySelector('time')?.getAttribute('datetime') || '');
+          });
+          if (posts.length) break;
+        }
+      }
+    }
+
+    // Strategy 6: all [data-testid="message-body"] elements (grab each with nearest author sibling)
+    if (!posts.length) {
+      document.querySelectorAll('[data-testid="message-body"]').forEach((bodyEl, i) => {
+        // walk up to find an author near this body
+        let authorEl = null;
+        let cursor = bodyEl.parentElement;
+        for (let depth = 0; depth < 8 && cursor; depth++, cursor = cursor.parentElement) {
+          authorEl = cursor.querySelector('[data-testid="author-name"], [class*="author"], [class*="Author"]');
+          if (authorEl && authorEl !== bodyEl) break;
+        }
+        const author = authorEl?.innerText?.trim() || `Student ${i + 1}`;
+        const body = bodyEl.innerText?.trim() || '';
+        addPost(author, body, bodyEl.closest('[data-testid]')?.querySelector('time')?.getAttribute('datetime') || '');
+      });
+    }
+
+    // Strategy 7: Canvas API fallback — fetch entries via REST if DOM yields nothing
+    // (handled async separately, this sync fallback grabs raw text)
+    if (!posts.length) {
+      const containers = [
+        '#discussion_entries',
+        '[data-component="DiscussionEntries"]',
+        '[class*="DiscussionEntries"]',
+        '[id*="discussion"]',
+      ];
+      for (const sel of containers) {
+        const el = document.querySelector(sel);
+        if (el) {
+          const blob = el.innerText?.trim() || '';
+          if (blob.length > 50) {
+            posts.push({ author: 'Full Discussion (raw)', body: blob.slice(0, 10000), timestamp: '' });
+            break;
+          }
+        }
+      }
     }
 
     return { courseTitle, discussionTitle, discussionPrompt, posts, url: window.location.href, scrapedAt: new Date().toISOString() };
+  }
+
+  // ── API-based post fetch (Canvas REST) ────────────────────────────────────
+  // Fetches posts via the Canvas API as a reliable fallback — called in runAnalysis
+  async function fetchPostsViaAPI(baseUrl, courseId) {
+    const urlMatch = window.location.href.match(/\/discussion_topics\/(\d+)/);
+    if (!urlMatch) return [];
+    const topicId = urlMatch[1];
+
+    try {
+      const entries = await cFetchAll(`${baseUrl}/api/v1/courses/${courseId}/discussion_topics/${topicId}/entries?per_page=50`);
+      const posts = [];
+
+      for (const entry of entries) {
+        const author = entry.user?.display_name || entry.user_name || 'Unknown Student';
+        const body = (entry.message || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        if (body.length > 10) {
+          posts.push({ author, body, timestamp: entry.created_at || '' });
+        }
+        // Also fetch replies to this entry
+        if (entry.has_children || entry.recent_replies?.length) {
+          try {
+            const replies = await cFetchAll(`${baseUrl}/api/v1/courses/${courseId}/discussion_topics/${topicId}/entries/${entry.id}/replies?per_page=50`);
+            for (const reply of replies) {
+              const rAuthor = reply.user?.display_name || reply.user_name || 'Unknown Student';
+              const rBody = (reply.message || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+              if (rBody.length > 10) posts.push({ author: rAuthor, body: rBody, timestamp: reply.created_at || '' });
+            }
+          } catch {}
+        }
+      }
+      return posts;
+    } catch (e) {
+      console.warn('API fetch failed:', e);
+      return [];
+    }
   }
 
   // ── Build materials ───────────────────────────────────────────────────────
@@ -257,6 +401,20 @@ Return ONLY valid JSON, no markdown, no extra text. Use exactly this structure:
       setStatus('⏳ Reading discussion posts…');
       const discussionData = scrape();
 
+      // 2b. If DOM scrape failed, try Canvas API directly
+      if (!discussionData.posts.length && parsed) {
+        setStatus('⏳ Fetching posts via Canvas API…');
+        try {
+          const apiPosts = await fetchPostsViaAPI(parsed.baseUrl, parsed.courseId);
+          if (apiPosts.length) {
+            discussionData.posts = apiPosts;
+            console.log(`[CanvasInsight] Got ${apiPosts.length} posts via API`);
+          }
+        } catch (e) {
+          console.warn('[CanvasInsight] API post fetch failed:', e);
+        }
+      }
+
       // 3. Materials
       const parsed = parseUrl(window.location.href);
       let materials = null;
@@ -300,7 +458,20 @@ Return ONLY valid JSON, no markdown, no extra text. Use exactly this structure:
   // ── Message listener (for popup) ──────────────────────────────────────────
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg.action === 'SCRAPE_DISCUSSION') {
-      sendResponse({ success: true, data: scrape() });
+      const data = scrape();
+      if (!data.posts.length) {
+        const p = parseUrl(window.location.href);
+        if (p) {
+          fetchPostsViaAPI(p.baseUrl, p.courseId)
+            .then(apiPosts => {
+              if (apiPosts.length) data.posts = apiPosts;
+              sendResponse({ success: true, data });
+            })
+            .catch(() => sendResponse({ success: true, data }));
+          return true; // async
+        }
+      }
+      sendResponse({ success: true, data });
       return true;
     }
     if (msg.action === 'FETCH_COURSE_FILES') {
