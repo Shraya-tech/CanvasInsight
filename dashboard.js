@@ -5,7 +5,7 @@ function scoreColor(n){
   if(n>=50) return '#fbbf24';
   return '#f87171';
 }
-
+ok
 function levelClass(l){
   return {'excellent':'lv-excellent','good':'lv-good','fair':'lv-fair','poor':'lv-poor'}[l]||'lv-fair';
 }
