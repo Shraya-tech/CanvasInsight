@@ -8,7 +8,7 @@
     "storage",
     "scripting",
     "tabs"
-  ],
+  ],many
   "host_permissions": [
     "https://*.instructure.com/*",
     "https://*.canvas.net/*",
