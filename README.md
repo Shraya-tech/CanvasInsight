@@ -74,8 +74,16 @@ Notes
 - The extension only activates on Canvas discussion pages
 - Analysis quality improves significantly when course materials are included
 
-Teams
+> Built in under 24 hours at HackUNCP 2026 · 1,572 lines of vanilla JavaScript · Zero dependencies · Zero backend servers
 
+Technical Challenges Solved
+- Manifest V3 CORS restrictions — moved Claude API calls to content script
+- Custom Canvas domain compatibility (UNCP + standard instructure.com)
+- Multi-selector DOM scraping for old and new Canvas UI versions  
+- chrome.storage race condition — confirmed callback + polling retry loop
+- Prompt engineering for consistent JSON output from Claude
+
+Teams
 Shraya Rajkarnikar and Jebish Bhattarai Khatri 
 
 Built at **HackUNCP 2026** for the AI in Education track.
